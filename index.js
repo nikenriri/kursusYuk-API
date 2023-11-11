@@ -4,6 +4,7 @@ const { User, Token } = require('./app/models')
 const bcrypt = require('bcrypt')
 const randomString = require('randomstring')
 const port = process.env.APP_PORT || 8080
+const router = require('./app/router')
 
 app.use(express.json())
 
@@ -85,6 +86,9 @@ app.get('/protected', tokenAuth, async (req, res) => {
   })
 })
 
+app.use('/api', router);
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`)
 })
+
+module.exports = app;
