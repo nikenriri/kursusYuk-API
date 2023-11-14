@@ -1,4 +1,17 @@
 const { Basket, Checkout, Product} = require('../models');
+//const Course = require('../models/course');
+
+const addProduct = async (req, res) => {
+  try{
+    const { product_id } = req.body;
+    const basketItems = await Basket.create({product_id});
+    res.status(201).json({ basketItems });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).son({ error: 'Failed to add product'})
+  }
+};
 
 const getAllProductsFromBasket = async (req, res) => {
   try {
@@ -15,5 +28,6 @@ const getAllProductsFromBasket = async (req, res) => {
 
 
 module.exports = {
-  getAllProductsFromBasket
+  getAllProductsFromBasket,
+  addProduct
 };

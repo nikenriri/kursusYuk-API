@@ -10,7 +10,6 @@ module.exports = {
     for (let i = 0; i < 10; i++) {
       basketsData.push({
         user_id: faker.number.int(),
-        product_id: faker.commerce.isbn(),
         createdAt: new Date(),
         updatedAt: new Date(),
       });
