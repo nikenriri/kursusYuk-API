@@ -1,4 +1,4 @@
-const { Course } = require('../models');
+const { Course } = require('../../../models');
 const { Op } = require('sequelize');
 
 const searchCourses = async (req, res) => {

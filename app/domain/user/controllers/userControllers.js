@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const { User, Token } = require('../../app/models')
+const { User, Token } = require('../../../models')
 const bcrypt = require('bcrypt')
 const randomString = require('randomstring')
 
