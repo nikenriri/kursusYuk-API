@@ -7,7 +7,7 @@ const randomString = require('randomstring')
 
 app.use(express.json())
 
-// const tokenAuth = async (req, res, next) => {
+//const tokenAuth = async (req, res, next) => {
 //   const authorizationToken = req.headers['authorization']
 //   if (!authorizationToken) {
 //     res.status(401).send({ error: 'No token provided' })
