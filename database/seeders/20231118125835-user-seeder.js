@@ -1,16 +1,19 @@
-'use strict'
-
-const { User } = require('../../app/models')
 const { faker } = require('@faker-js/faker')
+const { User, Role } = require('../../app/models')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    const roles = await Role.findAll()
+
     for (let i = 0; i < 10; i++) {
       await User.create({
-        name: 'John ' + i,
-        email: 'email-' + i + '@gmail.com',
-        password: 'password'
+        email: faker.internet.email().toLowerCase(),
+        password: 'password',
+        name: faker.person.fullName(),
+        roleId: roles[Math.floor(Math.random() * roles.length)].id,
+        createdAt: new Date(),
+        updatedAt: new Date()
       })
     }
   },
