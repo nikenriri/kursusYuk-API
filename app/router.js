@@ -8,7 +8,7 @@ const userRoutes = require('../app/routes/userRoutes')
 
 router.use('/', courseRoutes);
 router.use('/search', searchRoutes);
-router.use('/basket', basketRoutes)
+router.use('/basket', basketRoutes);
 router.use('/user', userRoutes);
 
 

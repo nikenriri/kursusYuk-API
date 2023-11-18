@@ -1,82 +1,71 @@
 const express = require('express')
 const app = express()
-const { User, Token } = require('../../app/models')
+const { User, Token, Role } = require('../models')
 const bcrypt = require('bcrypt')
+const Roles = require('../constants/role')
 const randomString = require('randomstring')
 
 app.use(express.json())
 
-const tokenAuth = async (req, res, next) => {
-  const authorizationToken = req.headers['authorization']
-  if (!authorizationToken) {
-    res.status(401).send({ error: 'No token provided' })
-    return
-  }
-  const userToken = await Token.findOne({ where: { token: authorizationToken } })
-  if (!userToken) {
-    res.status(401).send({ error: 'Invalid token' })
-    return
-  }
-  const user = await User.findByPk(userToken.userId)
-  req.user = user.toJSON()
+// const tokenAuth = async (req, res, next) => {
+//   const authorizationToken = req.headers['authorization']
+//   if (!authorizationToken) {
+//     res.status(401).send({ error: 'No token provided' })
+//     return
+//   }
+//   const userToken = await Token.findOne({ where: { token: authorizationToken } })
+//   if (!userToken) {
+//     res.status(401).send({ error: 'Invalid token' })
+//     return
+//   }
+//   const user = await User.findByPk(userToken.userId)
+//   req.user = user.toJSON()
 
-  next()
-}
-
-const userRegister = async (req, res) => {
-  const { name, email, password } = req.body;
-
-  try {
-    // Check if the user already exists
-    const existingUser = await User.findOne({
-      where: { email: email },
-    });
-
-    if (existingUser) {
-      res.status(422).send({ error: 'User already exists' });
-      return;
-    }
-
-    // Create a new user
-    // const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({
-      name: name,
-      email: email,
-      password: password,
-    });
-
-    res.json({ message: 'User registered successfully', userId: newUser.id });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: 'Internal Server Error' });
-  }
-};
-
+//   next()
+// }
 const userLogin = async (req, res) => {
   const { email, password } = req.body
-  const user = await User.findOne({
-    where: { email: email.toLowerCase() }
-  })
 
-  console.log('Login attempt:', { email, password });
+  const user = await User.findOne({ where: { email } })
 
   if (!user) {
-    res.status(422).send({ error: 'Invalid credentials' })
-    return
+    return res.status(401).json({ message: 'Invalid credentials' })
   }
 
-  const validPassword = await bcrypt.compare(password, user.password)
-  console.log('Password comparison result:', validPassword);
-  if (!validPassword) {
-    console.log('Invalid password');
-    res.status(422).send({ error: 'Invalid credentials', details: { email, password } })
-    return
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: 'Invalid credentials' })
   }
 
-  const token = randomString.generate()
-  await Token.create({ userId: user.id, token: token })
-  res.json({ token: token })
+  const token = Buffer.from(`${randomString.generate()}:${randomString.generate()}`).toString(
+    'base64'
+  )
+  await Token.create({ token, userId: user.id })
+
+  res.json({ token })
+
 };
+
+const userRegister = async (req, res) => {
+  const { name, email, password } = req.body
+
+  const role = await Role.findOne({ where: { name: Roles.CUSTOMER } })
+
+  try {
+    await User.create({
+      name,
+      email,
+      password,
+      roleId: role.id
+    })
+
+    res.json({ message: 'Registration success' })
+  } catch (error) {
+    res.status(422).json(error)
+  }
+
+};
+
 
 const userEditProfile = async (req, res) => {
     const{ token: tokenAuth, name, email } = req.body;
@@ -176,9 +165,9 @@ const userLogout = async (req, res) => {
 // })
 
 module.exports = {
-    userRegister,
-    userLogin,
-    userEditProfile,
-    deleteAccount,
-    userLogout,
+  userRegister,
+  userLogin,
+  userEditProfile,
+  deleteAccount,
+  userLogout,
 }
