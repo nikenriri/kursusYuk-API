@@ -1,4 +1,4 @@
-const { Course } = require('../models');
+const { Course, CourseDetail } = require('../models');
 
 const getAllCourses = async (req, res) => {
   try {
@@ -10,13 +10,21 @@ const getAllCourses = async (req, res) => {
 };
 
 const getCourseById = async (req, res) => {
-  const courseId = req.params.product_id;
 
   try {
-    const course = await Course.findByPk(courseId);
+    const course = await Course.findByPk(req.params.id, {
+      include: [
+        {
+          model: CourseDetail,
+          as: 'courseDetail',
+        },
+      ],
+    });
+
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
+
     res.json(course);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,11 +43,10 @@ const createCourse = async (req, res) => {
 };
 
 const updateCourse = async (req, res) => {
-  const courseId = req.params.product_id;
   const { name, description, price, category, image } = req.body;
 
   try {
-    const course = await Course.findByPk(courseId);
+    const course = await Course.findByPk(req.params.id);
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
@@ -52,10 +59,8 @@ const updateCourse = async (req, res) => {
 };
 
 const deleteCourse = async (req, res) => {
-  const courseId = req.params.product_id;
-
   try {
-    const course = await Course.findByPk(courseId);
+    const course = await Course.findByPk(req.params.id);
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
