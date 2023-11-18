@@ -7,26 +7,10 @@ const randomString = require('randomstring')
 
 app.use(express.json())
 
-//const tokenAuth = async (req, res, next) => {
-//   const authorizationToken = req.headers['authorization']
-//   if (!authorizationToken) {
-//     res.status(401).send({ error: 'No token provided' })
-//     return
-//   }
-//   const userToken = await Token.findOne({ where: { token: authorizationToken } })
-//   if (!userToken) {
-//     res.status(401).send({ error: 'Invalid token' })
-//     return
-//   }
-//   const user = await User.findByPk(userToken.userId)
-//   req.user = user.toJSON()
-
-//   next()
-// }
 const userLogin = async (req, res) => {
   const { email, password } = req.body
-
-  const user = await User.findOne({ where: { email } })
+  const user = await User.findOne(
+    { where: { email: email.toLowerCase() } })
 
   if (!user) {
     return res.status(401).json({ message: 'Invalid credentials' })
@@ -52,16 +36,27 @@ const userRegister = async (req, res) => {
   const role = await Role.findOne({ where: { name: Roles.CUSTOMER } })
 
   try {
-    await User.create({
-      name,
-      email,
-      password,
-      roleId: role.id
-    })
+    //check if the user already exists
+    const existingUser = await User.findOne({
+        where: {email: email},
+    });
 
-    res.json({ message: 'Registration success' })
+    if(existingUser){
+        res.status(422).send({error: 'User already exists'});
+        return;
+    }
+
+    //Create a new user
+    const newUser = await User.create({
+        name,
+        email,
+        password,
+        roleId: role.id
+    })
+    res.json({ message: 'User registered successfully', userId: newUser.id })
   } catch (error) {
-    res.status(422).json(error)
+    console.error(error);
+    res.status(500).send({error: 'Internal server error'})
   }
 
 };
@@ -108,47 +103,53 @@ const userEditProfile = async (req, res) => {
 }
 
 const deleteAccount = async (req, res) => {
-    const { token: tokenAuth } = req.body;
+    const authorizationToken = req.headers['authorization'];
 
-    if(!tokenAuth){
-        res.status(401).send({error: 'Unauthorized'});
+    if (!authorizationToken) {
+        res.status(401).send({ error: 'Unauthorized' });
         return;
     }
 
-    const tokenRecord = await Token.findOne({
-        where:{ token: tokenAuth },
-        include: [{ model: User, as: 'user'}]
-    });
-
-    if(!tokenRecord || !tokenRecord.user){
-        res.status(401).send({ error: 'Unauthorizzed' });
-        return;
-    }
-
-    const user = tokenRecord.user;
-    try{
-        await User.destroy({
-            where: { id: user.id }
+    try {
+        const tokenRecord = await Token.findOne({
+            where: { token: authorizationToken },
+            include: [{ model: User, as: 'user' }]
         });
 
-        res.json({ message: 'Account seccessfully deleted' });
-    }catch(error){
+        if (!tokenRecord || !tokenRecord.user) {
+            res.status(401).send({ error: 'Unauthorized' });
+            return;
+        }
+
+        const user = tokenRecord.user;
+
+        //menghapus token terkait pengguna
+        await Token.destroy({
+            where: { userId: user.id }
+        });
+        //menghapus pengguna setelah token terkait dihapus
+        await User.destroy({
+            where: { id: user.id }
+        })
+
+        res.json({ message: 'Account successfully deleted' });
+    } catch (error) {
         console.error('Error deleting account:', error);
-        res.status(500).send({ error: 'Internal server error'})
+        res.status(500).send({ error: 'Internal server error' });
     }
 }
 
 const userLogout = async (req, res) => {
-    const { token: tokenAuth } = req.body;
+    const authorizationToken = req.headers['authorization'];
 
-    if(!tokenAuth){
+    if(!authorizationToken){
         res.status(401).send({error: 'Unauthorized'});
         return;
     }
 
     try{
         await Token.destroy({
-            where: { token: tokenAuth}
+            where: { token: authorizationToken}
         })
 
         res.json({message: 'Logout successful'})
@@ -157,12 +158,6 @@ const userLogout = async (req, res) => {
         res.status(500).send({message: 'Internal server error'})
     }
 }
-
-// app.get('/protected', tokenAuth, async (req, res) => {
-//   res.json({
-//     message: 'This is a protected route'
-//   })
-// })
 
 module.exports = {
   userRegister,
