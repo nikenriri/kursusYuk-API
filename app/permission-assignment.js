@@ -24,6 +24,7 @@ module.exports = {
     permission.ADD_ORDER,
 
     permission.ADD_TO_CART,
-    permission.VIEW_CART
+    permission.VIEW_CART,
+    permission.DELETE_CART_ITEM
   ]
 }
