@@ -4,6 +4,6 @@ const { searchCourses } = require('../controllers/SearchController');
 const allowedTo = require('../middlewares/permission')
 const permission = require('../constants/permission')
 
-router.get('/courses', allowedTo(permission.BROWSE_PRODUCTS), searchCourses);
+router.get('/courses', searchCourses);
 
 module.exports = router;
