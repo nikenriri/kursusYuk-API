@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const searchController = require('../controllers/SearchController');
+const { searchCourses } = require('../controllers/SearchController');
+const allowedTo = require('../middlewares/permission')
+const permission = require('../constants/permission')
 
-router.get('/courses', searchController.searchCourses);
+router.get('/courses', allowedTo(permission.BROWSE_PRODUCTS), searchCourses);
 
 module.exports = router;
